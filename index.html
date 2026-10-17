@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Garment Costing System</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="wrap hidden" id="appWrap">
+  <div class="print-header">GARMENT COSTING SHEET</div>
+
+  <div class="top">
+    <div>
+      <h1>GARMENT COSTING</h1>
+    </div>
+    <nav>
+      <button id="navCosting" class="active" onclick="showPage('costing')">📋 COSTING SHEET</button>
+      <button id="navList" onclick="showPage('list')">📂 COSTINGS</button>
+      <button id="navMaster" data-perm="master.view" onclick="showPage('master')">🗄 MASTER SHEET</button>
+      <button id="navUsers" data-perm="users.manage" onclick="showPage('users')">👥 USERS</button>
+      <button onclick="openPwd(false)">🔑 <span id="whoami"></span></button>
+      <button onclick="logout()">⏻ Logout</button>
+    </nav>
+  </div>
+
+  <div id="pageCosting" class="page active">
+    <div class="toolbar">
+      <button class="success" data-perm="costing.create" onclick="saveCosting(false)">💾 SAVE</button>
+      <button class="primary" data-perm="costing.create" onclick="saveCosting(true)">⧉ SAVE AS NEW</button>
+      <button class="info" onclick="newCosting()">➕ NEW</button>
+      <button class="warn" data-perm="costing.print" onclick="window.print()">🖨 Print / PDF</button>
+      <div class="spacer"></div><b id="curName" style="color:#334e68"></b>
+    </div>
+
+    <div class="model-block">
+      <div class="model-left">
+        <div class="model-row">
+          <div class="model-label">CUSTOMER:</div>
+          <div class="model-value"><input id="customer" value="DKNY JEANS"></div>
+        </div>
+        <div class="model-row">
+          <div class="model-label">STYLE REF / SPECS:</div>
+          <div class="model-value"><input id="style" value="DJQT1549 2X2 Rib Crew Nk Short Slv TEE 2X2 RIB, 57% cotton, 38% poly 5% spandex, 250 GSM"></div>
+        </div>
+        <div class="model-row double">
+          <div class="model-label">SIZE RANGE</div>
+          <div class="model-value"><input id="size" value="M - 3XL"></div>
+          <div class="model-value"><input id="currencySymbol" value="$" readonly style="text-align:center;font-weight:700;"></div>
+          <div class="model-value"><input id="rate" type="number" value="51" step="0.0001" style="text-align:center;font-weight:700;"></div>
+        </div>
+        <div class="model-row">
+          <div class="model-label">MATERIAL TYPE</div>
+          <div class="model-value">
+            <select id="mode">
+              <option value="FABRIC">FABRIC</option>
+              <option value="YARN" selected>YARN</option>
+            </select>
+          </div>
+        </div>
+        <div class="model-row">
+          <div class="model-label" id="materialLabel">YARN</div>
+          <div class="model-value">
+            <select id="mainMaterial"></select>
+          </div>
+        </div>
+        <div class="model-row" id="colorRow" style="display:none">
+          <div class="model-label">COLOR</div>
+          <div class="model-value">
+            <select id="color">
+              <option value="WHITE">WHITE</option>
+              <option value="MEDIUM COLOR" selected>MEDIUM COLOR</option>
+              <option value="DARK COLORS">DARK COLORS</option>
+            </select>
+          </div>
+        </div>
+        <div class="model-row" id="dyeingRow">
+          <div class="model-label">DYEING SERVICE</div>
+          <div class="model-value"><select id="dyeingService"></select></div>
+        </div>
+        <div class="model-row" id="knittingRow">
+          <div class="model-label">KNITTING SERVICE</div>
+          <div class="model-value"><select id="knittingService"></select></div>
+        </div>
+        <div class="model-row">
+          <div class="model-label">CURRENCY</div>
+          <div class="model-value"><select id="currency"></select></div>
+        </div>
+      </div>
+      <div class="model-right">
+        <input type="file" id="productImage" accept="image/*" onchange="handleImageUpload(event)" class="no-print" style="font-size:10px;margin-bottom:4px;">
+        <img id="imgPreview" class="img-preview" alt="Product Image">
+        <div class="img-placeholder" id="imgPlaceholder">Product Image<br>(No Image)</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>1. FABRIC & PROCESSING COST</h2>
+      <div class="add-row-bar no-print"><button onclick="addFabricRow()">+ ADD FABRIC ROW</button></div>
+      <div class="table-wrap">
+        <table class="cost">
+          <thead><tr><th>NO.</th><th>ITEM DESCRIPTION</th><th>COMPONENT / DETAILS</th><th>PCS WEIGHT (KG)</th><th>DZ CONSUM.</th><th>U/PRICE</th><th>$ COST/DZ</th><th>$ COST/PC</th><th class="del-col">DEL</th></tr></thead>
+          <tbody id="fabricRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>2. TRIMS & ACCESSORIES</h2>
+      <div class="add-row-bar no-print"><button onclick="addTrimRow()">+ ADD TRIM ROW</button></div>
+      <div class="table-wrap">
+        <table class="cost">
+          <thead><tr><th>NO.</th><th>ITEM DESCRIPTION</th><th>COMPONENT / DETAILS</th><th>PCS WEIGHT (KG)</th><th>DZ CONSUM.</th><th>U/PRICE</th><th>$ COST/DZ</th><th>$ COST/PC</th><th class="del-col">DEL</th></tr></thead>
+          <tbody id="trimRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>3. PACKAGING</h2>
+      <div class="add-row-bar no-print"><button onclick="addPackRow()">+ ADD PACKAGING ROW</button></div>
+      <div class="table-wrap">
+        <table class="cost">
+          <thead><tr><th>NO.</th><th>ITEM DESCRIPTION</th><th>COMPONENT / DETAILS</th><th>PCS WEIGHT (KG)</th><th>DZ CONSUM.</th><th>U/PRICE</th><th>$ COST/DZ</th><th>$ COST/PC</th><th class="del-col">DEL</th></tr></thead>
+          <tbody id="packRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>4. MANUFACTURING & OPERATIONS (C.M.T)</h2>
+      <div class="add-row-bar no-print"><button onclick="addMfgRow()">+ ADD MANUFACTURING ROW</button></div>
+      <div class="table-wrap">
+        <table class="cost">
+          <thead><tr><th>NO.</th><th>ITEM DESCRIPTION</th><th>COMPONENT / DETAILS</th><th>DZ CONSUM.</th><th>U/PRICE</th><th>$ COST/DZ</th><th>$ COST/PC</th><th class="del-col">DEL</th></tr></thead>
+          <tbody id="mfgRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>5. COST ADJUSTMENTS</h2>
+      <div class="add-row-bar no-print"><button onclick="addAdjRow()">+ ADD ADJUSTMENT ROW</button></div>
+      <div class="table-wrap">
+        <table class="cost">
+          <thead><tr><th>ITEM</th><th>RATE %</th><th>$ COST/DZ</th><th>$ COST/PC</th><th class="del-col">DEL</th></tr></thead>
+          <tbody id="adjRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="summary">
+      <table>
+        <tr><td>TOTAL DIRECT COST (NET)</td><td id="directDz">$0.00</td><td id="directPc">$0.00</td></tr>
+        <tr><td>OVERHEAD EXPENSES</td><td id="ohDz">$0.00</td><td id="ohPc">$0.00</td></tr>
+        <tr><td>SECOND QUALITY / WASTE ALLOWANCE</td><td id="wasteDz">$0.00</td><td id="wastePc">$0.00</td></tr>
+        <tr><td>FINANCIAL / BANKING CHARGES</td><td id="bankDz">$0.00</td><td id="bankPc">$0.00</td></tr>
+        <tr class="grand"><td>TOTAL CALCULATED COST (FOB)</td><td id="fobDz">$0.00</td><td id="fobPc">$0.00</td></tr>
+        <tr class="pc"><td>COST PER PCS</td><td colspan="2" id="costPc">$0.00</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div id="pageMaster" class="page">
+    <div class="toolbar">
+      <button class="success" data-perm="master.edit" onclick="saveMaster()">💾 SAVE MASTER DATA</button>
+      <button class="primary" onclick="reloadMaster()">🔄 RELOAD FROM GOOGLE SHEET</button>
+    </div>
+
+    <div class="section master">
+      <h2>⚙ SETTINGS</h2>
+      <div class="settings-grid">
+        <div class="settings-field"><label>Price per Minute (USD)</label><input id="minuteRate" type="number" value="3.5" step="0.01"></div>
+        <div class="settings-field"><label>Number of Minutes</label><input id="numberOfMinutes" type="number" value="7.0" step="0.1"></div>
+      </div>
+    </div>
+
+    <div class="section master">
+      <h2>💱 CURRENCIES</h2>
+      <div class="flex-row">
+        <input class="search-box" id="searchCurrency" placeholder="🔍 Search..." oninput="renderMasterCurrencies()">
+        <div class="spacer"></div>
+        <button class="btn-sm btn-add" onclick="addCurrencyRow()">+ Add Currency</button>
+      </div>
+      <div class="table-wrap">
+        <table class="master-table" id="currencyTable">
+          <thead><tr><th>Code / Symbol</th><th>Name</th><th>Exchange Rate (per USD)</th><th>Actions</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section master">
+      <h2>🧵 FABRICS</h2>
+      <div class="flex-row">
+        <input class="search-box" id="searchFabric" placeholder="🔍 Search..." oninput="renderMasterFabrics()">
+        <div class="spacer"></div>
+        <button class="btn-sm btn-add" onclick="addFabricMasterRow()">+ Add Fabric</button>
+      </div>
+      <div class="table-wrap">
+        <table class="master-table" id="fabricTable">
+          <thead><tr><th>Fabric Name</th><th>WHITE</th><th>MEDIUM COLOR</th><th>DARK COLORS</th><th>Actions</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section master">
+      <h2>🧶 YARNS</h2>
+      <div class="flex-row">
+        <input class="search-box" id="searchYarn" placeholder="🔍 Search..." oninput="renderMasterYarns()">
+        <div class="spacer"></div>
+        <button class="btn-sm btn-add" onclick="addYarnRow()">+ Add Yarn</button>
+      </div>
+      <div class="table-wrap">
+        <table class="master-table" id="yarnTable">
+          <thead><tr><th>Yarn Name</th><th>Price ($/kg)</th><th>Actions</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section master">
+      <h2>🎨 DYEING</h2>
+      <div class="flex-row">
+        <input class="search-box" id="searchDyeing" placeholder="🔍 Search..." oninput="renderMasterDyeing()">
+        <div class="spacer"></div>
+        <button class="btn-sm btn-add" onclick="addDyeingRow()">+ Add Dyeing</button>
+      </div>
+      <div class="table-wrap">
+        <table class="master-table" id="dyeingTable">
+          <thead><tr><th>Dyeing Name</th><th>KG/$</th><th>Actions</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section master">
+      <h2>⚙ SERVICES</h2>
+      <div class="flex-row">
+        <input class="search-box" id="searchService" placeholder="🔍 Search..." oninput="renderMasterServices()">
+        <div class="spacer"></div>
+        <button class="btn-sm btn-add" onclick="addServiceRow()">+ Add Service</button>
+      </div>
+      <div class="table-wrap">
+        <table class="master-table" id="serviceTable">
+          <thead><tr><th>Service Name</th><th>KG/$</th><th>Actions</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section master">
+      <h2>🧶 KNITTING</h2>
+      <div class="flex-row">
+        <input class="search-box" id="searchKnitting" placeholder="🔍 Search..." oninput="renderMasterKnitting()">
+        <div class="spacer"></div>
+        <button class="btn-sm btn-add" onclick="addKnittingRow()">+ Add Knitting</button>
+      </div>
+      <div class="table-wrap">
+        <table class="master-table" id="knittingTable">
+          <thead><tr><th>Knitting Name</th><th>KG/$</th><th>Actions</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="pageList" class="page">
+    <div class="toolbar"><input class="search-box" id="searchCosting" placeholder="🔍 Search..." oninput="renderList()"><div class="spacer"></div><button class="primary" onclick="loadList()">🔄 Refresh</button></div>
+    <div class="section"><h2>📂 SAVED COSTINGS</h2><div class="table-wrap"><table class="master-table"><thead><tr><th>Name</th><th>Customer</th><th>Style</th><th>Owner</th><th>Updated</th><th>Actions</th></tr></thead><tbody id="costingList"></tbody></table></div></div>
+  </div>
+
+  <div id="pageUsers" class="page">
+    <div class="section"><h2>👥 USERS &amp; RIGHTS</h2>
+      <div class="new-user">
+        <input id="nuUser" placeholder="username"><input id="nuName" placeholder="full name"><input id="nuPass" type="text" placeholder="temporary password (8+)">
+        <select id="nuRole"><option value="user">User</option><option value="admin">Admin</option></select>
+        <span id="nuPerms" style="display:flex;gap:10px;flex-wrap:wrap"></span>
+        <button class="btn-sm btn-add" onclick="addUser()">+ Add user</button>
+      </div>
+      <div class="table-wrap"><table class="master-table users-table"><thead id="userHead"></thead><tbody id="userRows"></tbody></table></div>
+      <div style="padding:10px 14px;font-size:12px;color:#667">Admins have every right automatically. Users get only the rights ticked here. Changes apply on the user's next action.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Print Footer with Date (only visible in print) -->
+<div class="print-footer" id="printFooter">
+  <div class="date-line">Printed on: <span id="printDate"></span></div>
+</div>
+
+
+<div id="loginScreen" class="login hidden">
+  <form class="login-card" onsubmit="doLogin(event)">
+    <h1>GARMENT COSTING</h1><p>Sign in to continue</p>
+    <input id="loginUser" placeholder="Username" autocomplete="username" required>
+    <input id="loginPass" type="password" placeholder="Password" autocomplete="current-password" required>
+    <button id="loginBtn" class="primary">Sign in</button><div id="loginErr" class="err"></div>
+  </form>
+</div>
+<div id="pwdModal" class="modal hidden"><div>
+  <h3 style="margin:0">Change password</h3><div id="pwdNote" class="err"></div>
+  <input id="pwOld" type="password" placeholder="Current password" autocomplete="current-password">
+  <input id="pwNew" type="password" placeholder="New password (8+ characters)" autocomplete="new-password">
+  <input id="pwNew2" type="password" placeholder="Repeat new password" autocomplete="new-password">
+  <button class="success" onclick="submitPwd()">Save password</button>
+  <button id="pwdCancel" onclick="closePwd()">Cancel</button>
+</div></div>
+<div class="status ok" id="status">Ready</div>
+<div class="toast" id="toast">✓ Saved</div>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
